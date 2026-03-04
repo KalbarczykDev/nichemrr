@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { DealStartup } from "@/lib/types";
+import { useState } from "react";
+import { Startup, DealStartup } from "@/lib/types";
 import { computeDealScores } from "@/lib/analysis";
-import { fetchAllStartups } from "@/lib/trustmrr";
 import { formatMrr, formatMultiple } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,97 +16,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ExternalLink, Flame, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExternalLink, Flame, HelpCircle } from "lucide-react";
 
 type SortKey = "dealScore" | "mrr" | "multiple" | "askingPrice";
 type SortDir = "asc" | "desc";
 
 interface ValuationTabProps {
-  apiKey: string;
+  startups: Startup[] | null;
+  loading: boolean;
 }
 
-export function ValuationTab({ apiKey }: ValuationTabProps) {
-  const [deals, setDeals] = useState<DealStartup[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<{ loaded: number; total: number | null }>({
-    loaded: 0,
-    total: null,
-  });
+const PAGE_SIZE = 50;
+
+export function ValuationTab({ startups, loading }: ValuationTabProps) {
   const [sortKey, setSortKey] = useState<SortKey>("dealScore");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [initialized, setInitialized] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setProgress({ loaded: 0, total: null });
-    try {
-      const startups = await fetchAllStartups(apiKey, { onSale: "true" }, (loaded, total) => {
-        setProgress({ loaded, total });
-      });
-      const scored = computeDealScores(startups);
-      setDeals(scored);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "RATE_LIMITED") {
-        toast.error("Rate limit reached. Please wait a moment and try again.");
-      } else if (msg === "UNAUTHORIZED") {
-        toast.error("Invalid API key. Please refresh the page and re-enter your key.");
-      } else {
-        toast.error("Failed to load data. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [apiKey]);
-
-  useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
-      load();
-    }
-  }, [initialized, load]);
+  const deals: DealStartup[] = startups ? computeDealScores(startups) : [];
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("desc"); }
+    setPage(1);
   }
 
   const sorted = [...deals].sort((a, b) => {
     const mul = sortDir === "desc" ? -1 : 1;
     if (sortKey === "dealScore") return mul * (a.dealScore - b.dealScore);
-    if (sortKey === "mrr") return mul * (a.mrr - b.mrr);
+    if (sortKey === "mrr") return mul * ((a.mrr ?? 0) - (b.mrr ?? 0));
     if (sortKey === "multiple") return mul * ((a.multiple ?? 0) - (b.multiple ?? 0));
     if (sortKey === "askingPrice") return mul * ((a.askingPrice ?? 0) - (b.askingPrice ?? 0));
     return 0;
   });
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const pageRows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const hotDeals = deals.filter((d) => d.isHotDeal).length;
   const avgMultiple =
     deals.filter((d) => d.multiple !== null).length > 0
-      ? deals
-          .filter((d) => d.multiple !== null)
-          .reduce((sum, d) => sum + d.multiple!, 0) /
+      ? deals.filter((d) => d.multiple !== null).reduce((sum, d) => sum + d.multiple!, 0) /
         deals.filter((d) => d.multiple !== null).length
       : null;
   const bestDeal = deals.length
     ? deals.reduce((best, d) => (d.dealScore > best.dealScore ? d : best), deals[0])
     : null;
 
-  if (loading && deals.length === 0) {
-    return <ValuationSkeleton progress={progress} />;
-  }
-
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <span className="ml-1 opacity-30">↕</span>;
     return <span className="ml-1">{sortDir === "desc" ? "↓" : "↑"}</span>;
   }
 
+  if (loading && !startups) {
+    return <ValuationSkeleton />;
+  }
+
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -138,14 +105,6 @@ export function ValuationTab({ apiKey }: ValuationTabProps) {
         </Card>
       </div>
 
-      {/* Controls */}
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-
       {/* Table */}
       <Card>
         <Table>
@@ -153,42 +112,53 @@ export function ValuationTab({ apiKey }: ValuationTabProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => toggleSort("mrr")}
-              >
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("mrr")}>
                 MRR <SortIcon col="mrr" />
               </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => toggleSort("askingPrice")}
-              >
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("askingPrice")}>
                 Asking Price <SortIcon col="askingPrice" />
               </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => toggleSort("multiple")}
-              >
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("multiple")}>
                 Multiple <SortIcon col="multiple" />
               </TableHead>
-              <TableHead>Cat Avg</TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => toggleSort("dealScore")}
-              >
-                Deal Score <SortIcon col="dealScore" />
+              <TableHead>
+                <Tooltip>
+                  <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                    Cat Avg <HelpCircle className="h-3 w-3" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Average asking multiple for startups in the same category. Used as the baseline to calculate the Deal Score.
+                  </TooltipContent>
+                </Tooltip>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dealScore")}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1">
+                      Deal Score <HelpCircle className="h-3 w-3 text-muted-foreground" /> <SortIcon col="dealScore" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-64">
+                    <p className="font-semibold mb-1">How it&apos;s calculated</p>
+                    <p className="text-muted-foreground mb-2">
+                      (Category avg multiple − this multiple) ÷ category avg × 100
+                    </p>
+                    <p>
+                      <strong className="text-amber-400">Golden</strong> = Hot Deal, 20%+ below avg.<br />
+                      <strong className="text-green-400">Green</strong> = below category average.<br />
+                      <strong className="text-red-400">Red</strong> = above average → overpriced.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((s) => (
+            {pageRows.map((s) => (
               <TableRow
                 key={s.id}
                 className="cursor-pointer"
-                onClick={() => {
-                  const url = s.url ?? `https://trustmrr.com/startups/${s.id}`;
-                  window.open(url, "_blank", "noopener,noreferrer");
-                }}
+                onClick={() => window.open(s.url, "_blank", "noopener,noreferrer")}
               >
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-1">
@@ -202,12 +172,8 @@ export function ValuationTab({ apiKey }: ValuationTabProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>{formatMrr(s.mrr)}</TableCell>
-                <TableCell>
-                  {s.askingPrice !== null ? formatMrr(s.askingPrice) : "—"}
-                </TableCell>
-                <TableCell>
-                  {s.multiple !== null ? formatMultiple(s.multiple) : "—"}
-                </TableCell>
+                <TableCell>{s.askingPrice !== null ? formatMrr(s.askingPrice) : "—"}</TableCell>
+                <TableCell>{s.multiple !== null ? formatMultiple(s.multiple) : "—"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatMultiple(s.categoryAvgMultiple)}
                 </TableCell>
@@ -224,14 +190,32 @@ export function ValuationTab({ apiKey }: ValuationTabProps) {
           </div>
         )}
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+              Previous
+            </Button>
+            <span className="px-1">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
+    </TooltipProvider>
   );
 }
 
 function DealScoreBadge({ score, isHot }: { score: number; isHot: boolean }) {
   if (isHot) {
     return (
-      <Badge variant="success" className="flex items-center gap-1 w-fit">
+      <Badge variant="amber" className="flex items-center gap-1 w-fit">
         <Flame className="h-3 w-3" />
         {score.toFixed(0)}% below avg
       </Badge>
@@ -239,7 +223,7 @@ function DealScoreBadge({ score, isHot }: { score: number; isHot: boolean }) {
   }
   if (score >= 0) {
     return (
-      <Badge variant="warning" className="w-fit">
+      <Badge variant="success" className="w-fit">
         {score.toFixed(0)}% below avg
       </Badge>
     );
@@ -251,7 +235,7 @@ function DealScoreBadge({ score, isHot }: { score: number; isHot: boolean }) {
   );
 }
 
-function ValuationSkeleton({ progress }: { progress: { loaded: number; total: number | null } }) {
+function ValuationSkeleton() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -264,12 +248,7 @@ function ValuationSkeleton({ progress }: { progress: { loaded: number; total: nu
           </Card>
         ))}
       </div>
-      {progress.loaded > 0 && (
-        <div className="text-center text-sm text-muted-foreground">
-          Loading {progress.loaded}
-          {progress.total ? ` / ${progress.total}` : ""} startups…
-        </div>
-      )}
+      <div className="text-center text-sm text-muted-foreground">Loading startups…</div>
       <Card>
         <div className="p-4 space-y-3">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (

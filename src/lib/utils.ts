@@ -5,13 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatMrr(mrr: number): string {
+export function formatMrr(mrr: number | null | undefined): string {
+  if (mrr == null) return "—";
   if (mrr >= 1_000_000) return `$${(mrr / 1_000_000).toFixed(1)}M`;
   if (mrr >= 1_000) return `$${(mrr / 1_000).toFixed(1)}K`;
   return `$${mrr.toFixed(0)}`;
 }
 
-export function formatMultiple(multiple: number): string {
+export function formatMultiple(multiple: number | null | undefined): string {
+  if (multiple == null) return "—";
   return `${multiple.toFixed(1)}x`;
 }
 

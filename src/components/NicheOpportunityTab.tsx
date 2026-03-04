@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { NicheGroup } from "@/lib/types";
+import { useState } from "react";
+import { Startup, NicheGroup } from "@/lib/types";
 import { groupByCategory } from "@/lib/analysis";
-import { fetchAllStartups } from "@/lib/trustmrr";
 import { formatMrr, formatGrowth } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,55 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Flame, RefreshCw, TrendingUp } from "lucide-react";
-import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Flame, HelpCircle, TrendingUp } from "lucide-react";
 
 type SortBy = "opportunityScore" | "avgMrr" | "count";
 
 interface NicheOpportunityTabProps {
-  apiKey: string;
+  startups: Startup[] | null;
+  loading: boolean;
 }
 
-export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
-  const [groups, setGroups] = useState<NicheGroup[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<{ loaded: number; total: number | null }>({
-    loaded: 0,
-    total: null,
-  });
+export function NicheOpportunityTab({ startups, loading }: NicheOpportunityTabProps) {
   const [sortBy, setSortBy] = useState<SortBy>("opportunityScore");
-  const [initialized, setInitialized] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setProgress({ loaded: 0, total: null });
-    try {
-      const startups = await fetchAllStartups(apiKey, {}, (loaded, total) => {
-        setProgress({ loaded, total });
-      });
-      const grouped = groupByCategory(startups);
-      setGroups(grouped);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "RATE_LIMITED") {
-        toast.error("Rate limit reached. Please wait a moment and try again.");
-      } else if (msg === "UNAUTHORIZED") {
-        toast.error("Invalid API key. Please refresh the page and re-enter your key.");
-      } else {
-        toast.error("Failed to load data. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [apiKey]);
-
-  useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
-      load();
-    }
-  }, [initialized, load]);
+  const groups: NicheGroup[] = startups ? groupByCategory(startups) : [];
 
   const sorted = [...groups].sort((a, b) => {
     if (sortBy === "opportunityScore") return b.opportunityScore - a.opportunityScore;
@@ -78,15 +42,16 @@ export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
 
   const maxScore = Math.max(...groups.map((g) => g.opportunityScore), 1);
 
-  if (loading && groups.length === 0) {
-    return <LoadingSkeleton progress={progress} />;
+  if (loading && !startups) {
+    return <LoadingSkeleton />;
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       {/* Stat bar */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total Startups" value={groups.reduce((s, g) => s + g.count, 0)} />
+        <StatCard label="Total Startups" value={startups?.length ?? 0} />
         <StatCard label="Categories Found" value={groups.length} />
         <StatCard
           label="Highest Avg MRR Category"
@@ -110,10 +75,6 @@ export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
       </div>
 
       {/* Niche cards grid */}
@@ -131,10 +92,17 @@ export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     {isHot && (
-                      <Badge variant="amber" className="flex items-center gap-1">
-                        <Flame className="h-3 w-3" />
-                        Hot Opportunity
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="amber" className="flex items-center gap-1 cursor-help">
+                            <Flame className="h-3 w-3" />
+                            Hot Opportunity
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Top 3 niches by Opportunity Score — high average MRR with few competitors.
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     <Badge variant="secondary">{group.category}</Badge>
                   </div>
@@ -157,10 +125,25 @@ export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
 
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      Opportunity Score
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          <TrendingUp className="h-3 w-3" />
+                          Opportunity Score
+                          <HelpCircle className="h-3 w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64">
+                        <p className="font-semibold mb-1">How it&apos;s calculated</p>
+                        <p className="text-muted-foreground mb-2">
+                          (Avg MRR ÷ highest niche MRR) × (1 − competition penalty)
+                        </p>
+                        <p>
+                          Rewards niches with <strong>high revenue</strong> and <strong>low competition</strong>.
+                          A niche with 20+ startups gets a 0 competition score. Fewer startups = bigger multiplier.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                     <span className="font-medium text-foreground">
                       {(group.opportunityScore * 100).toFixed(0)}
                     </span>
@@ -187,24 +170,17 @@ export function NicheOpportunityTab({ apiKey }: NicheOpportunityTabProps) {
         })}
       </div>
 
-      {groups.length === 0 && !loading && (
+      {startups && groups.length === 0 && (
         <div className="py-16 text-center text-muted-foreground">
           No data found. Try refreshing.
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  small,
-}: {
-  label: string;
-  value: string | number;
-  small?: boolean;
-}) {
+function StatCard({ label, value, small }: { label: string; value: string | number; small?: boolean }) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -215,7 +191,7 @@ function StatCard({
   );
 }
 
-function LoadingSkeleton({ progress }: { progress: { loaded: number; total: number | null } }) {
+function LoadingSkeleton() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -228,16 +204,7 @@ function LoadingSkeleton({ progress }: { progress: { loaded: number; total: numb
           </Card>
         ))}
       </div>
-      {progress.total !== null && (
-        <div className="text-center text-sm text-muted-foreground">
-          Loading {progress.loaded} / {progress.total} startups…
-        </div>
-      )}
-      {progress.total === null && progress.loaded > 0 && (
-        <div className="text-center text-sm text-muted-foreground">
-          Loaded {progress.loaded} startups…
-        </div>
-      )}
+      <div className="text-center text-sm text-muted-foreground">Loading startups…</div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <Card key={i}>

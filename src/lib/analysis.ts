@@ -12,9 +12,12 @@ export function groupByCategory(startups: Startup[]): NicheGroup[] {
   const groups: Omit<NicheGroup, "opportunityScore">[] = [];
 
   for (const [category, items] of map.entries()) {
-    const avgMrr = items.reduce((sum, s) => sum + s.mrr, 0) / items.length;
+    const mrrItems = items.filter((s) => s.mrr != null);
+    const avgMrr = mrrItems.length > 0
+      ? mrrItems.reduce((sum, s) => sum + s.mrr!, 0) / mrrItems.length
+      : 0;
 
-    const growthItems = items.filter((s) => s.growth !== null);
+    const growthItems = items.filter((s) => s.growth != null);
     const avgGrowth =
       growthItems.length > 0
         ? growthItems.reduce((sum, s) => sum + s.growth!, 0) / growthItems.length
@@ -23,7 +26,7 @@ export function groupByCategory(startups: Startup[]): NicheGroup[] {
     const totalCustomers = items.reduce((sum, s) => sum + (s.customers ?? 0), 0);
 
     const topStartups = [...items]
-      .sort((a, b) => b.mrr - a.mrr)
+      .sort((a, b) => (b.mrr ?? 0) - (a.mrr ?? 0))
       .slice(0, 3);
 
     groups.push({ category, count: items.length, avgMrr, avgGrowth, totalCustomers, topStartups });
