@@ -10,12 +10,26 @@ export const dynamic = "force-dynamic";
 const TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 // Use global so the mutex survives Next.js hot-reloads in dev mode.
-// Without this, each hot-reload resets the module and concurrent requests
-// each start their own TrustMrr pagination loop, exhausting the rate limit.
 declare global {
   var _fetchInflight: Promise<Startup[]> | null;
 }
 global._fetchInflight ??= null;
+
+async function writeToCache(startups: Startup[]): Promise<void> {
+  const cachedAt = new Date();
+  const ops = startups.map((s) => ({
+    updateOne: {
+      filter: { id: s.id },
+      update: { $set: { ...s, cachedAt } },
+      upsert: true,
+    },
+  }));
+  await StartupCache.bulkWrite(ops, { ordered: false });
+
+  // Remove startups that no longer exist in TrustMrr
+  const freshIds = startups.map((s) => s.id);
+  await StartupCache.deleteMany({ id: { $nin: freshIds } });
+}
 
 async function fetchAndCache(apiKey: string): Promise<Startup[]> {
   if (global._fetchInflight) return global._fetchInflight;
@@ -31,11 +45,7 @@ async function fetchAndCache(apiKey: string): Promise<Startup[]> {
         fetchStatus.loaded = loaded;
         fetchStatus.retrying = retrying;
       });
-      await StartupCache.findOneAndUpdate(
-        { filter: "all" },
-        { $set: { startups, cachedAt: new Date(), count: startups.length } },
-        { upsert: true, new: true }
-      );
+      await writeToCache(startups);
       return startups;
     } finally {
       fetchStatus.active = false;
@@ -50,7 +60,6 @@ async function fetchAndCache(apiKey: string): Promise<Startup[]> {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const filter = searchParams.get("filter");
-  const bust = searchParams.get("bust") === "1";
 
   if (filter !== "all" && filter !== "onSale") {
     return NextResponse.json({ error: "Invalid filter. Must be 'all' or 'onSale'." }, { status: 400 });
@@ -58,20 +67,22 @@ export async function GET(req: NextRequest) {
 
   await connectToDatabase();
 
-  const cached = await StartupCache.findOne({ filter: "all" }).lean();
-  const age = cached ? Date.now() - new Date(cached.cachedAt).getTime() : Infinity;
+  // Freshness = age of the oldest document in the cache
+  const oldest = await StartupCache.findOne({}).sort({ cachedAt: 1 }).select("cachedAt").lean();
+  const age = oldest ? Date.now() - new Date(oldest.cachedAt).getTime() : Infinity;
+  const hasCache = !!oldest;
 
-  // Stale-while-revalidate: if we have any cached data, serve it immediately
-  // and kick off a background refresh if the TTL has expired.
-  if (cached) {
+  // Stale-while-revalidate: serve existing data immediately, refresh in background
+  if (hasCache) {
     if (age >= TTL_MS) {
       const apiKey = process.env.TRUSTMRR_API_KEY;
-      if (apiKey) fetchAndCache(apiKey).catch(console.error); // background, don't await
+      if (apiKey) fetchAndCache(apiKey).catch(console.error);
     }
-    const data = filter === "onSale" ? cached.startups.filter((s) => s.onSale) : cached.startups;
+    const query = filter === "onSale" ? { onSale: true } : {};
+    const data = await StartupCache.find(query).lean();
     return NextResponse.json({
       data,
-      meta: { count: data.length, cachedAt: cached.cachedAt, fresh: age < TTL_MS },
+      meta: { count: data.length, cachedAt: oldest.cachedAt, fresh: age < TTL_MS },
     });
   }
 
@@ -83,11 +94,8 @@ export async function GET(req: NextRequest) {
   const allStartups = await fetchAndCache(apiKey);
 
   const data = filter === "onSale" ? allStartups.filter((s) => s.onSale) : allStartups;
-  const cachedAt = new Date();
-  const fresh = false;
-
   return NextResponse.json({
     data,
-    meta: { count: data.length, cachedAt, fresh },
+    meta: { count: data.length, cachedAt: new Date(), fresh: false },
   });
 }

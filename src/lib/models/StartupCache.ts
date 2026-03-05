@@ -1,16 +1,13 @@
 import mongoose, { Schema } from "mongoose";
 import { Startup } from "@/lib/types";
 
-export interface StartupCacheDoc {
-  filter: "all" | "onSale";
-  startups: Startup[];
+export interface StartupCacheDoc extends Startup {
   cachedAt: Date;
-  count: number;
 }
 
-const startupSchema = new Schema<Startup>(
+const startupCacheSchema = new Schema<StartupCacheDoc>(
   {
-    id: String,
+    id: { type: String, required: true, unique: true },
     name: String,
     category: Schema.Types.Mixed,
     mrr: Schema.Types.Mixed,
@@ -22,16 +19,7 @@ const startupSchema = new Schema<Startup>(
     url: String,
     description: Schema.Types.Mixed,
     createdAt: Schema.Types.Mixed,
-  },
-  { _id: false }
-);
-
-const startupCacheSchema = new Schema<StartupCacheDoc>(
-  {
-    filter: { type: String, enum: ["all", "onSale"], required: true, unique: true },
-    startups: [startupSchema],
     cachedAt: { type: Date, required: true },
-    count: { type: Number, required: true },
   },
   { versionKey: false }
 );
