@@ -17,26 +17,34 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (params.get("verified") === "1") setInfo("Email verified! You can now sign in.");
-    if (params.get("error") === "INVALID_TOKEN") setError("Invalid or expired verification link.");
+    if (params.get("verified") === "1")
+      setInfo("Email verified! You can now sign in.");
+    if (params.get("error") === "INVALID_TOKEN")
+      setError("Invalid or expired verification link.");
   }, [params]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
     setLoading(false);
     if (result?.ok) {
       router.push("/dashboard");
     } else {
-      setError("Invalid credentials or unverified email — please check your inbox.");
+      setError("Invalid credentials or unverified email.");
     }
   }
 
   return (
     <>
-      {info && <p className="text-sm text-green-600 dark:text-green-400">{info}</p>}
+      {info && (
+        <p className="text-sm text-green-600 dark:text-green-400">{info}</p>
+      )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
