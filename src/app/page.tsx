@@ -31,9 +31,9 @@ export default async function LandingPage() {
           Powered by TrustMrr data
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6">
-          Find the right SaaS niche.
+          Find niche for your next SaaS.
           <br />
-          Score every deal.
+          Or acquire it.
         </h1>
         <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
           NicheMRR analyses thousands of real startups to surface
@@ -151,7 +151,8 @@ export default async function LandingPage() {
           </p>
           <Link href={loggedIn ? "/dashboard" : "/register"}>
             <Button size="lg" className="gap-2">
-              {loggedIn ? "Go to dashboard" : "Get started"} <ArrowRight className="h-4 w-4" />
+              {loggedIn ? "Go to dashboard" : "Get started"}{" "}
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>

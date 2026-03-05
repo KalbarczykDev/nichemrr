@@ -10,7 +10,7 @@ import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NicheMRR | Find your next SaaS niche",
+  title: "NicheMRR | Find niche for your next SaaS",
   description: "Analyze startup niches and deal scores using TrustMrr data",
   icons: {
     icon: [

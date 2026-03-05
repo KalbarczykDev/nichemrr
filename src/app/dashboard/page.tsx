@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Startup } from "@/lib/types";
 import { NicheOpportunityTab } from "@/components/NicheOpportunityTab";
 import { ValuationTab } from "@/components/ValuationTab";
@@ -68,13 +69,13 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div>
-            <a href="/" className="inline-flex items-center gap-2">
-              {" "}
+          <a href="/" className="inline-flex items-center gap-2">
+            <Image src="/icon.svg" alt="NicheMRR" width={40} height={40} />
+            <div>
               <h1 className="text-xl font-bold">NicheMRR</h1>
-            </a>
-            <p className="text-xs text-muted-foreground">Powered by TrustMrr</p>
-          </div>
+              <p className="text-xs text-muted-foreground">Powered by TrustMrr</p>
+            </div>
+          </a>
           <div className="flex items-center gap-3">
             <UserMenu />
           </div>
