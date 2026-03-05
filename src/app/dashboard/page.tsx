@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Startup } from "@/lib/types";
 import { NicheOpportunityTab } from "@/components/NicheOpportunityTab";
 import { ValuationTab } from "@/components/ValuationTab";
@@ -14,16 +14,11 @@ interface DataState {
   loading: boolean;
 }
 
-interface FetchStatus {
-  active: boolean;
-  page: number;
-  loaded: number;
-  retrying: boolean;
-}
-
 const initial: DataState = { startups: null, loading: false };
 
-async function fetchCached(filter: "all" | "onSale"): Promise<{ data: Startup[]; cachedAt: string }> {
+async function fetchCached(
+  filter: "all" | "onSale",
+): Promise<{ data: Startup[]; cachedAt: string }> {
   const res = await fetch(`/api/startups/cached?filter=${filter}`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const json = await res.json();
@@ -32,50 +27,24 @@ async function fetchCached(filter: "all" | "onSale"): Promise<{ data: Startup[];
 
 function formatCachedAt(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-}
-
-function statusMessage(status: FetchStatus): string {
-  if (!status.active) return "Loading…";
-  if (status.retrying) return `Rate limit reached — waiting 60s before retrying (${status.loaded} startups loaded so far)`;
-  if (status.loaded === 0) return "Connecting to TrustMrr…";
-  return `Fetching from TrustMrr — ${status.loaded} startups loaded (page ${status.page})`;
 }
 
 export default function Home() {
   const [nicheData, setNicheData] = useState<DataState>(initial);
   const [saleData, setSaleData] = useState<DataState>(initial);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
-  const [fetchStatus, setFetchStatus] = useState<FetchStatus>({ active: false, page: 0, loaded: 0, retrying: false });
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isLoading = nicheData.loading || saleData.loading;
 
   useEffect(() => {
     loadAll();
   }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      pollRef.current = setInterval(async () => {
-        try {
-          const res = await fetch("/api/startups/status");
-          if (res.ok) setFetchStatus(await res.json());
-        } catch { /* ignore */ }
-      }, 1500);
-    } else {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-      setFetchStatus({ active: false, page: 0, loaded: 0, retrying: false });
-    }
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [isLoading]);
 
   async function loadAll() {
     setNicheData({ startups: null, loading: true });
@@ -100,7 +69,10 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div>
-            <h1 className="text-xl font-bold">NicheMRR</h1>
+            <a href="/" className="inline-flex items-center gap-2">
+              {" "}
+              <h1 className="text-xl font-bold">NicheMRR</h1>
+            </a>
             <p className="text-xs text-muted-foreground">Powered by TrustMrr</p>
           </div>
           <div className="flex items-center gap-3">
@@ -113,7 +85,7 @@ export default function Home() {
         {isLoading && (
           <div className="mb-6 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-            <span>{statusMessage(fetchStatus)}</span>
+            <span>Loading…</span>
           </div>
         )}
 
@@ -124,7 +96,10 @@ export default function Home() {
                 <Tag className="h-4 w-4" />
                 Niche Opportunity Finder
               </TabsTrigger>
-              <TabsTrigger value="valuation" className="flex items-center gap-2">
+              <TabsTrigger
+                value="valuation"
+                className="flex items-center gap-2"
+              >
                 <BarChart2 className="h-4 w-4" />
                 Startup Valuation / Deal Score
               </TabsTrigger>
@@ -136,10 +111,16 @@ export default function Home() {
             )}
           </div>
           <TabsContent value="niches">
-            <NicheOpportunityTab startups={nicheData.startups} loading={nicheData.loading} />
+            <NicheOpportunityTab
+              startups={nicheData.startups}
+              loading={nicheData.loading}
+            />
           </TabsContent>
           <TabsContent value="valuation">
-            <ValuationTab startups={saleData.startups} loading={saleData.loading} />
+            <ValuationTab
+              startups={saleData.startups}
+              loading={saleData.loading}
+            />
           </TabsContent>
         </Tabs>
       </main>

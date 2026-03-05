@@ -8,6 +8,9 @@ import {
   Zap,
   ArrowRight,
 } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
   title: "NicheMRR — Startup Niche Analyzer",
@@ -15,25 +18,12 @@ export const metadata = {
     "Discover high-opportunity SaaS niches and score acquisition deals using real TrustMrr data.",
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getServerSession(authOptions);
+  const loggedIn = !!session;
   return (
     <div className="flex flex-col">
-      {/* Nav */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <span className="text-lg font-bold">NicheMRR</span>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Sign in
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Get started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="container mx-auto px-4 py-24 text-center max-w-3xl">
@@ -51,16 +41,26 @@ export default function LandingPage() {
           high-opportunity niches and flag undervalued acquisitions.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/register">
-            <Button size="lg" className="gap-2">
-              Start for free <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="lg" variant="outline">
-              Sign in
-            </Button>
-          </Link>
+          {loggedIn ? (
+            <Link href="/dashboard">
+              <Button size="lg" className="gap-2">
+                Go to dashboard <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/register">
+                <Button size="lg" className="gap-2">
+                  Start for free <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline">
+                  Sign in
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
@@ -150,9 +150,9 @@ export default function LandingPage() {
             Create a free account and get access to the full dashboard in
             seconds.
           </p>
-          <Link href="/register">
+          <Link href={loggedIn ? "/dashboard" : "/register"}>
             <Button size="lg" className="gap-2">
-              Get started <ArrowRight className="h-4 w-4" />
+              {loggedIn ? "Go to dashboard" : "Get started"} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>

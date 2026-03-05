@@ -1,9 +1,12 @@
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = { title: "Privacy Policy — NicheMRR" };
 
 export default function PrivacyPage() {
   return (
+    <>
+    <SiteHeader />
     <div className="container mx-auto max-w-2xl px-4 py-12">
       <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
       <p className="text-sm text-muted-foreground mb-10">Last updated: March 2026</p>
@@ -110,5 +113,6 @@ export default function PrivacyPage() {
         </Link>
       </div>
     </div>
+    </>
   );
 }
