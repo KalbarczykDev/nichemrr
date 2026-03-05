@@ -87,7 +87,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <div className="w-full max-w-sm space-y-6">
-      <h1 className="text-2xl font-bold">Reset password</h1>
+      <h1 className="text-2xl font-bold text-center">Reset password</h1>
       <Suspense fallback={null}>
         <ResetPasswordForm />
       </Suspense>
