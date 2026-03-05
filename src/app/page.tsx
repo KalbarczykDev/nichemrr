@@ -13,7 +13,6 @@ import { authOptions } from "@/lib/authOptions";
 import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
-  title: "NicheMRR — Startup Niche Analyzer",
   description:
     "Discover high-opportunity SaaS niches and score acquisition deals using real TrustMrr data.",
 };

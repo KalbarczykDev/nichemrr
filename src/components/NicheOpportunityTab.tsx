@@ -136,11 +136,12 @@ export function NicheOpportunityTab({ startups, loading }: NicheOpportunityTabPr
                       <TooltipContent className="max-w-64">
                         <p className="font-semibold mb-1">How it&apos;s calculated</p>
                         <p className="text-muted-foreground mb-2">
-                          (Avg MRR ÷ highest niche MRR) × (1 − competition penalty)
+                          (Avg MRR ÷ highest niche MRR) × (1 − competition penalty) × (1 + growth bonus + margin bonus)
                         </p>
                         <p>
-                          Rewards niches with <strong>high revenue</strong> and <strong>low competition</strong>.
-                          A niche with 20+ startups gets a 0 competition score. Fewer startups = bigger multiplier.
+                          Rewards niches with <strong>high revenue</strong>, <strong>low competition</strong>,
+                          strong <strong>30-day growth</strong>, and high <strong>profit margins</strong>.
+                          A niche with 20+ startups gets a 0 competition score.
                         </p>
                       </TooltipContent>
                     </Tooltip>

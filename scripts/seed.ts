@@ -25,15 +25,28 @@ function sleep(ms: number) {
 interface TrustMrrStartup {
   slug: string;
   name: string;
+  icon: string | null;
+  description: string | null;
+  website: string | null;
+  country: string | null;
+  foundedDate: string | null;
   category: string | null;
-  revenue: { mrr: number | null } | null;
-  growth30d: number | null;
+  paymentProvider: string | null;
+  targetAudience: string | null;
+  revenue: {
+    last30Days: number | null;
+    mrr: number | null;
+    total: number | null;
+  } | null;
   customers: number | null;
+  activeSubscriptions: number | null;
   askingPrice: number | null;
+  profitMarginLast30Days: number | null;
+  growth30d: number | null;
   multiple: number | null;
   onSale: boolean;
-  description: string | null;
-  createdAt: string | null;
+  firstListedForSaleAt: string | null;
+  xHandle: string | null;
 }
 
 interface TrustMrrResponse {
@@ -44,32 +57,54 @@ interface TrustMrrResponse {
 interface Startup {
   id: string;
   name: string;
+  icon: string | null;
+  description: string | null;
+  website: string | null;
+  url: string;
+  country: string | null;
+  foundedDate: string | null;
   category: string | null;
+  paymentProvider: string | null;
+  targetAudience: string | null;
   mrr: number | null;
-  growth: number | null;
+  revenueLastMonth: number | null;
+  revenueTotal: number | null;
   customers: number | null;
+  activeSubscriptions: number | null;
   askingPrice: number | null;
+  profitMarginLast30Days: number | null;
+  growth: number | null;
   multiple: number | null;
   onSale: boolean;
-  url: string;
-  description: string | null;
-  createdAt: string | null;
+  firstListedForSaleAt: string | null;
+  xHandle: string | null;
 }
 
 function normalise(raw: TrustMrrStartup): Startup {
   return {
     id: raw.slug,
     name: raw.name,
+    icon: raw.icon ?? null,
+    description: raw.description ?? null,
+    website: raw.website ?? null,
+    url: `https://trustmrr.com/startup/${raw.slug}`,
+    country: raw.country ?? null,
+    foundedDate: raw.foundedDate ?? null,
     category: raw.category,
+    paymentProvider: raw.paymentProvider ?? null,
+    targetAudience: raw.targetAudience ?? null,
     mrr: raw.revenue?.mrr != null ? raw.revenue.mrr / 100 : null,
-    growth: raw.growth30d,
+    revenueLastMonth: raw.revenue?.last30Days != null ? raw.revenue.last30Days / 100 : null,
+    revenueTotal: raw.revenue?.total != null ? raw.revenue.total / 100 : null,
     customers: raw.customers,
+    activeSubscriptions: raw.activeSubscriptions ?? null,
     askingPrice: raw.askingPrice != null ? raw.askingPrice / 100 : null,
+    profitMarginLast30Days: raw.profitMarginLast30Days ?? null,
+    growth: raw.growth30d,
     multiple: raw.multiple,
     onSale: raw.onSale,
-    url: `https://trustmrr.com/startup/${raw.slug}`,
-    description: raw.description,
-    createdAt: raw.createdAt,
+    firstListedForSaleAt: raw.firstListedForSaleAt ?? null,
+    xHandle: raw.xHandle ?? null,
   };
 }
 
@@ -116,16 +151,27 @@ const startupCacheSchema = new Schema(
   {
     id: { type: String, required: true, unique: true },
     name: String,
+    icon: Schema.Types.Mixed,
+    description: Schema.Types.Mixed,
+    website: Schema.Types.Mixed,
+    url: String,
+    country: Schema.Types.Mixed,
+    foundedDate: Schema.Types.Mixed,
     category: Schema.Types.Mixed,
+    paymentProvider: Schema.Types.Mixed,
+    targetAudience: Schema.Types.Mixed,
     mrr: Schema.Types.Mixed,
-    growth: Schema.Types.Mixed,
+    revenueLastMonth: Schema.Types.Mixed,
+    revenueTotal: Schema.Types.Mixed,
     customers: Schema.Types.Mixed,
+    activeSubscriptions: Schema.Types.Mixed,
     askingPrice: Schema.Types.Mixed,
+    profitMarginLast30Days: Schema.Types.Mixed,
+    growth: Schema.Types.Mixed,
     multiple: Schema.Types.Mixed,
     onSale: Boolean,
-    url: String,
-    description: Schema.Types.Mixed,
-    createdAt: Schema.Types.Mixed,
+    firstListedForSaleAt: Schema.Types.Mixed,
+    xHandle: Schema.Types.Mixed,
     cachedAt: { type: Date, required: true },
   },
   { versionKey: false }
