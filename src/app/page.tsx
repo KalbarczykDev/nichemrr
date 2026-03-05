@@ -293,7 +293,7 @@ export default async function LandingPage() {
               },
             ].map(({ icon: Icon, step, title, desc }) => (
               <div key={step}>
-                <p className="text-7xl font-black text-foreground/10 mb-4 select-none leading-none">
+                <p className="text-7xl font-black text-foreground/20 dark:text-foreground/30 mb-4 select-none leading-none">
                   {step}
                 </p>
                 <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center mb-4">
@@ -307,23 +307,23 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA — inverted, same as dark accent card ── */}
-      <section className="bg-foreground border-t py-28">
+      {/* ── CTA — always dark ── */}
+      <section className="bg-zinc-950 dark:bg-zinc-900 border-t dark:border-zinc-800 py-28">
         <div className="container mx-auto px-4 text-center max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-background/40 mb-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-6">
             Get started
           </p>
-          <h2 className="text-5xl font-extrabold tracking-tight text-background mb-6">
+          <h2 className="text-5xl font-extrabold tracking-tight text-white mb-6">
             Ready to find your niche?
           </h2>
-          <p className="text-background/60 text-lg mb-10 max-w-md mx-auto">
+          <p className="text-zinc-400 text-lg mb-10 max-w-md mx-auto">
             Create a free account and get access to the full dashboard in
             seconds.
           </p>
           <Link href={loggedIn ? "/dashboard" : "/register"}>
             <Button
               size="lg"
-              className="gap-2 h-12 px-10 bg-background text-foreground hover:bg-background/90 text-base"
+              className="gap-2 h-12 px-10 bg-white text-zinc-950 hover:bg-zinc-100 text-base"
             >
               {loggedIn ? "Go to dashboard" : "Get started"}{" "}
               <ArrowRight className="h-4 w-4" />
