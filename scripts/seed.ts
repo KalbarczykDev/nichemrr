@@ -8,6 +8,7 @@
  */
 
 import * as dotenv from "dotenv";
+import * as fs from "fs";
 import * as path from "path";
 import * as mongoose from "mongoose";
 
@@ -110,7 +111,7 @@ function normalise(raw: TrustMrrStartup): Startup {
 
 // ── fetch ────────────────────────────────────────────────────────────────────
 
-async function fetchAll(apiKey: string): Promise<Startup[]> {
+async function fetchAll(apiKey: string, onPage: (batch: Startup[]) => void): Promise<Startup[]> {
   const all: Startup[] = [];
   let page = 1;
   let hasMore = true;
@@ -120,9 +121,18 @@ async function fetchAll(apiKey: string): Promise<Startup[]> {
     let res: Response | null = null;
 
     for (let attempt = 0; attempt <= 3; attempt++) {
-      res = await fetch(`${TRUSTMRR_API_BASE}/startups?${params}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
+      try {
+        res = await fetch(`${TRUSTMRR_API_BASE}/startups?${params}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+      } catch (err) {
+        // Network error (ECONNRESET, ETIMEDOUT, etc.)
+        if (attempt === 3) throw err;
+        const wait = (attempt + 1) * 10_000;
+        console.log(`  network error (attempt ${attempt + 1}) — retrying in ${wait / 1000}s...`);
+        await sleep(wait);
+        continue;
+      }
       if (res.status !== 429 && res.status !== 500) break;
       if (attempt === 3) throw new Error("RATE_LIMITED after 3 retries");
       console.log(`  rate limited — waiting 65s before retry...`);
@@ -132,9 +142,11 @@ async function fetchAll(apiKey: string): Promise<Startup[]> {
     if (!res!.ok) throw new Error(`API error: ${res!.status}`);
 
     const json: TrustMrrResponse = await res!.json();
-    all.push(...json.data.map(normalise));
+    const batch = json.data.map(normalise);
+    all.push(...batch);
     hasMore = json.meta.hasMore;
     console.log(`  page ${page} — ${all.length} / ${json.meta.total} loaded`);
+    onPage(batch);
 
     page++;
     if (hasMore) await sleep(DELAY_MS);
@@ -194,11 +206,21 @@ async function main() {
   await mongoose.connect(mongoUri, { bufferCommands: false });
   console.log("Connected.\n");
 
-  console.log("Fetching startups from TrustMrr...");
-  const startups = await fetchAll(apiKey);
-  console.log(`\nFetched ${startups.length} startups. Writing to MongoDB...`);
+  const dataDir = path.resolve(process.cwd(), "data");
+  fs.mkdirSync(dataDir, { recursive: true });
+  const outPath = path.join(dataDir, "startups.json");
 
   const cachedAt = new Date();
+  const accumulated: (Startup & { cachedAt: Date })[] = [];
+  function writeBatch(batch: Startup[]) {
+    accumulated.push(...batch.map((s) => ({ ...s, cachedAt })));
+    fs.writeFileSync(outPath, JSON.stringify(accumulated, null, 2));
+  }
+
+  console.log("Fetching startups from TrustMrr...");
+  const startups = await fetchAll(apiKey, writeBatch);
+  console.log(`\nFetched ${startups.length} startups. Writing to MongoDB...`);
+
   const ops = startups.map((s) => ({
     updateOne: {
       filter: { id: s.id },
@@ -211,11 +233,12 @@ async function main() {
   console.log(`  upserted: ${result.upsertedCount}, modified: ${result.modifiedCount}`);
 
   // Remove stale startups no longer in TrustMrr
-  const freshIds = startups.map((s) => s.id);
-  const deleted = await StartupCache.deleteMany({ id: { $nin: freshIds } });
+  const freshIds = new Set(startups.map((s) => s.id));
+  const deleted = await StartupCache.deleteMany({ id: { $nin: [...freshIds] } });
   if (deleted.deletedCount > 0) console.log(`  removed ${deleted.deletedCount} stale startups`);
 
-  console.log("\nDone.");
+  console.log(`Data written to ${outPath}`);
+  console.log("Done.");
   await mongoose.disconnect();
 }
 
