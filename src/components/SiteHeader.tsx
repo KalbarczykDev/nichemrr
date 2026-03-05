@@ -3,6 +3,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { SignOutButton } from "@/components/SignOutButton";
+import { UserMenu } from "@/components/UserMenu";
 
 export default async function SiteHeader() {
   const session = await getServerSession(authOptions);
@@ -20,9 +22,13 @@ export default async function SiteHeader() {
         </Link>
         <div className="flex items-center gap-3">
           {loggedIn ? (
-            <Link href="/dashboard">
-              <Button size="sm">Dashboard</Button>
-            </Link>
+            <>
+              <Link href="/dashboard">
+                <Button size="sm">Dashboard</Button>
+              </Link>
+              <SignOutButton />
+              <UserMenu />
+            </>
           ) : (
             <>
               <Link href="/login">
