@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Tag, TrendingUp, Search, Zap, ArrowRight, ArrowUpRight } from "lucide-react";
+import { BarChart2, Tag, TrendingUp, Search, Zap, ArrowRight } from "lucide-react";
+import { NicheIndexWidget } from "@/components/NicheIndexWidget";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import SiteHeader from "@/components/SiteHeader";
@@ -89,10 +90,10 @@ export default async function LandingPage() {
                 Powered by TrustMrr data
               </div>
 
-              <h1 className="text-5xl sm:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
-                Find niche for
+              <h1 className="text-[40px] sm:text-[56px] xl:text-[72px] font-black tracking-[-0.02em] leading-[1] mb-5 max-w-2xl">
+                Find the niche for
                 <br />
-                your next SaaS.
+                your next <span className="text-emerald-400">SaaS.</span>
                 <br />
                 <span className="text-zinc-500">Or acquire it.</span>
               </h1>
@@ -138,39 +139,16 @@ export default async function LandingPage() {
                 </div>
 
                 {stats?.topNiches.length ? (
-                  <div className="space-y-3.5">
-                    {stats.topNiches.map((n) => {
-                      const pct = Math.round((n.avgMrr / maxMrr) * 100);
-                      return (
-                        <div key={n._id} className="flex items-center gap-3">
-                          <span className="text-xs text-zinc-400 w-24 shrink-0 truncate">{n._id}</span>
-                          <div className="flex-1 bg-zinc-800 dark:bg-zinc-700 rounded-full h-1.5">
-                            <div className="bg-white h-1.5 rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                          <div className="flex items-center gap-1 w-16 justify-end">
-                            <span className="text-xs text-zinc-300">{fmtMrr(n.avgMrr)}</span>
-                            <ArrowUpRight className="h-3 w-3 text-emerald-400 shrink-0" />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <NicheIndexWidget
+                    niches={stats.topNiches}
+                    maxMrr={maxMrr}
+                    total={stats.total}
+                    categories={stats.categories}
+                    onSale={stats.onSale}
+                  />
                 ) : (
                   <p className="text-xs text-zinc-500 py-4">Loading market data…</p>
                 )}
-
-                <div className="mt-6 pt-5 border-t border-zinc-800 dark:border-zinc-700 grid grid-cols-3 gap-4">
-                  {[
-                    { label: "Startups", value: stats ? fmtCount(stats.total) : "—" },
-                    { label: "Categories", value: stats ? String(stats.categories) : "—" },
-                    { label: "On sale", value: stats ? String(stats.onSale) : "—" },
-                  ].map((s) => (
-                    <div key={s.label} className="text-center">
-                      <p className="text-lg font-bold text-white">{s.value}</p>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
@@ -184,8 +162,9 @@ export default async function LandingPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
               What you get
             </p>
-            <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-              Everything you need to find your next move
+            <h2 className="text-[32px] sm:text-[40px] lg:text-5xl font-black tracking-[-0.02em] leading-[1.1] text-zinc-900 dark:text-zinc-50 mb-5 max-w-xl">
+              Everything you need to find your{" "}
+              <span className="text-primary">next move</span>
             </h2>
           </div>
 
@@ -266,8 +245,8 @@ export default async function LandingPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
               How it works
             </p>
-            <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-              Three steps. That&apos;s it.
+            <h2 className="text-[32px] sm:text-[40px] lg:text-5xl font-black tracking-[-0.02em] leading-[1.1] text-zinc-900 dark:text-zinc-50 mb-5 max-w-xl">
+              <span className="text-primary">Three steps.</span> That&apos;s it.
             </h2>
           </div>
 
@@ -313,8 +292,8 @@ export default async function LandingPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-6">
             Get started
           </p>
-          <h2 className="text-5xl font-extrabold tracking-tight text-white mb-6">
-            Ready to find your niche?
+          <h2 className="text-[40px] sm:text-5xl font-black tracking-[-0.02em] leading-[1.1] text-white mb-5 max-w-lg mx-auto">
+            Ready to find your <span className="text-emerald-400">niche?</span>
           </h2>
           <p className="text-zinc-400 text-lg mb-10 max-w-md mx-auto">
             Create a free account and get access to the full dashboard in
