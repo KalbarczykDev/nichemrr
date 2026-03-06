@@ -21,6 +21,15 @@ export function UserMenu() {
 
   if (!session?.user) return null;
 
+  function saveTheme(next: "light" | "dark") {
+    setTheme(next);
+    fetch("/api/user/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: next }),
+    }).catch(() => {});
+  }
+
   async function handleDelete() {
     if (!window.confirm("Delete your account permanently? This cannot be undone.")) return;
     setDeleting(true);
@@ -56,7 +65,7 @@ export function UserMenu() {
                 variant={theme === "light" ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
-                onClick={() => setTheme("light")}
+                onClick={() => saveTheme("light")}
               >
                 <Sun className="h-4 w-4 mr-2" />
                 Light
@@ -65,7 +74,7 @@ export function UserMenu() {
                 variant={theme === "dark" ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
-                onClick={() => setTheme("dark")}
+                onClick={() => saveTheme("dark")}
               >
                 <Moon className="h-4 w-4 mr-2" />
                 Dark

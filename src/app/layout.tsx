@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
+import { UserSettingsSync } from "@/components/UserSettingsSync";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,9 +34,10 @@ export default function RootLayout({
         <SessionProviderWrapper>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
+            defaultTheme="system"
+            enableSystem={true}
           >
+            <UserSettingsSync />
             <div className="flex min-h-screen flex-col">
               {/* Beta notice */}
               <div className="bg-amber-400 text-amber-950 text-xs text-center px-4 py-2 font-medium flex items-center justify-center gap-1 flex-wrap">
