@@ -16,50 +16,71 @@ export function groupByCategory(startups: Startup[]): NicheGroup[] {
     const avgMrr =
       mrrItems.length > 0
         ? mrrItems.reduce((sum, s) => sum + s.mrr!, 0) / mrrItems.length
-        : 0;
+        : null;
 
     const growthItems = items.filter((s) => s.growth != null);
     const avgGrowth =
       growthItems.length > 0
-        ? growthItems.reduce((sum, s) => sum + s.growth!, 0) / growthItems.length
+        ? growthItems.reduce((sum, s) => sum + s.growth!, 0) /
+          growthItems.length
         : null;
 
     const marginItems = items.filter((s) => s.profitMarginLast30Days != null);
     const avgProfitMargin =
       marginItems.length > 0
-        ? marginItems.reduce((sum, s) => sum + s.profitMarginLast30Days!, 0) / marginItems.length
+        ? marginItems.reduce((sum, s) => sum + s.profitMarginLast30Days!, 0) /
+          marginItems.length
         : null;
 
-    const totalCustomers = items.reduce((sum, s) => sum + (s.customers ?? 0), 0);
+    const totalCustomers = items.reduce(
+      (sum, s) => sum + (s.customers ?? 0),
+      0,
+    );
 
     const topStartups = [...items]
       .sort((a, b) => (b.mrr ?? 0) - (a.mrr ?? 0))
       .slice(0, 3);
 
-    groups.push({ category, count: items.length, avgMrr, avgGrowth, avgProfitMargin, totalCustomers, topStartups });
+    groups.push({
+      category,
+      count: items.length,
+      avgMrr,
+      avgGrowth,
+      avgProfitMargin,
+      totalCustomers,
+      topStartups,
+    });
   }
 
-  const globalMaxAvgMrr = Math.max(...groups.map((g) => g.avgMrr), 1);
+  const globalMaxAvgMrr = Math.max(...groups.map((g) => g.avgMrr ?? 0), 1);
 
   return groups.map((g) => ({
     ...g,
-    opportunityScore: computeOpportunityScore(g.avgMrr, g.count, globalMaxAvgMrr, g.avgGrowth, g.avgProfitMargin),
+    opportunityScore: computeOpportunityScore(
+      g.avgMrr,
+      g.count,
+      globalMaxAvgMrr,
+      g.avgGrowth,
+      g.avgProfitMargin,
+    ),
   }));
 }
 
 export function computeOpportunityScore(
-  avgMrr: number,
+  avgMrr: number | null,
   count: number,
   globalMaxAvgMrr: number,
   avgGrowth: number | null,
   avgProfitMargin: number | null,
 ): number {
-  const mrrScore = avgMrr / globalMaxAvgMrr;          // 0–1
-  const competition = 1 - Math.min(count, 20) / 20;  // 0–1, fewer = better
+  const mrrScore = avgMrr != null ? avgMrr / globalMaxAvgMrr : 0; // 0–1
+  const competition = 1 - Math.min(count, 20) / 20; // 0–1, fewer = better
   // Growth bonus: up to +20% for 100% growth
-  const growthBonus = avgGrowth != null ? Math.min(Math.max(avgGrowth, 0), 1) * 0.2 : 0;
+  const growthBonus =
+    avgGrowth != null ? Math.min(Math.max(avgGrowth, 0), 1) * 0.2 : 0;
   // Margin bonus: up to +10% for 100% profit margin
-  const marginBonus = avgProfitMargin != null ? Math.min(avgProfitMargin / 100, 1) * 0.1 : 0;
+  const marginBonus =
+    avgProfitMargin != null ? Math.min(avgProfitMargin / 100, 1) * 0.1 : 0;
   return mrrScore * competition * (1 + growthBonus + marginBonus);
 }
 
@@ -67,47 +88,60 @@ export function computeDealScores(startups: Startup[]): DealStartup[] {
   const categoryMultiples = new Map<string, number[]>();
 
   for (const s of startups) {
-    if (s.multiple === null) continue;
+    if (s.multiple == null) continue;
     const key = s.category ?? "Uncategorized";
     if (!categoryMultiples.has(key)) categoryMultiples.set(key, []);
     categoryMultiples.get(key)!.push(s.multiple);
   }
 
-  const categoryAvgMultipleMap = new Map<string, number>();
-  for (const [cat, multiples] of categoryMultiples.entries()) {
-    categoryAvgMultipleMap.set(
-      cat,
-      multiples.reduce((sum, m) => sum + m, 0) / multiples.length
-    );
+  function median(values: number[]) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
-  const globalAvgMultiple =
-    startups.filter((s) => s.multiple !== null).reduce((sum, s) => sum + s.multiple!, 0) /
-    Math.max(startups.filter((s) => s.multiple !== null).length, 1);
+  const categoryMedianMap = new Map<string, number>();
+
+  for (const [cat, multiples] of categoryMultiples.entries()) {
+    categoryMedianMap.set(cat, median(multiples));
+  }
+
+  const globalMedian = median(
+    startups.filter((s) => s.multiple != null).map((s) => s.multiple!),
+  );
 
   return startups.map((s) => {
     const key = s.category ?? "Uncategorized";
-    const categoryAvgMultiple = categoryAvgMultipleMap.get(key) ?? globalAvgMultiple;
+    const categoryMedian = categoryMedianMap.get(key) ?? globalMedian;
 
-    // Base score: how far below category avg the multiple is
-    const multipleScore =
-      s.multiple !== null && categoryAvgMultiple > 0
-        ? ((categoryAvgMultiple - s.multiple) / categoryAvgMultiple) * 100
-        : 0;
+    let valueScore = 0;
 
-    // Margin bonus: each % above 50 adds 0.2 points (up to +10 at 100% margin)
-    const marginBonus =
-      s.profitMarginLast30Days != null
-        ? Math.max(0, (s.profitMarginLast30Days - 50) * 0.2)
-        : 0;
+    if (s.multiple != null && categoryMedian > 0) {
+      const discount = (categoryMedian - s.multiple) / categoryMedian;
+      valueScore = Math.max(-1, Math.min(1, discount)) * 100;
+    }
 
-    const dealScore = multipleScore + marginBonus;
+    let marginScore = 0;
+
+    if (s.profitMarginLast30Days != null) {
+      const margin = s.profitMarginLast30Days;
+
+      if (margin >= 50) {
+        marginScore = (margin - 50) * 0.3;
+      } else {
+        marginScore = -(50 - margin) * 0.2;
+      }
+    }
+
+    const dealScore = valueScore + marginScore;
 
     return {
       ...s,
-      categoryAvgMultiple,
+      categoryMedianMultiple: categoryMedian,
       dealScore,
-      isHotDeal: dealScore > 20,
+      isHotDeal: dealScore > 25,
     };
   });
 }

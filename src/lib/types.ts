@@ -11,13 +11,13 @@ export interface TrustMrrStartup {
   paymentProvider: string | null;
   targetAudience: string | null;
   revenue: {
-    last30Days: number | null; // cents
-    mrr: number | null;        // cents
-    total: number | null;      // cents
+    last30Days: number | null; // dollars
+    mrr: number | null;        // dollars
+    total: number | null;      // dollars
   } | null;
   customers: number | null;
   activeSubscriptions: number | null;
-  askingPrice: number | null;        // cents
+  askingPrice: number | null;        // dollars
   profitMarginLast30Days: number | null; // percentage 0–100
   growth30d: number | null;          // decimal e.g. 0.12 = 12%
   multiple: number | null;
@@ -49,12 +49,12 @@ export interface Startup {
   category: string | null;
   paymentProvider: string | null;
   targetAudience: string | null;
-  mrr: number | null;          // dollars
-  revenueLastMonth: number | null; // dollars (last30Days)
-  revenueTotal: number | null;     // dollars
+  mrr: number | null;
+  revenueLastMonth: number | null;
+  revenueTotal: number | null;
   customers: number | null;
   activeSubscriptions: number | null;
-  askingPrice: number | null;  // dollars
+  askingPrice: number | null;
   profitMarginLast30Days: number | null; // percentage
   growth: number | null;       // decimal
   multiple: number | null;
@@ -66,7 +66,7 @@ export interface Startup {
 export interface NicheGroup {
   category: string;
   count: number;
-  avgMrr: number;
+  avgMrr: number | null;
   avgGrowth: number | null;
   avgProfitMargin: number | null;
   totalCustomers: number;
