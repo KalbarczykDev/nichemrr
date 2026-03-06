@@ -67,13 +67,18 @@ function LoginForm() {
         </Button>
       </form>
 
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-      >
-        Continue with Google
-      </Button>
+      <div className="space-y-1">
+        <Button
+          variant="outline"
+          className="w-full opacity-50 cursor-not-allowed"
+          disabled
+        >
+          Continue with Google
+        </Button>
+        <p className="text-xs text-center text-muted-foreground">
+          Google login is temporarily unavailable
+        </p>
+      </div>
 
       <div className="flex justify-between text-sm text-muted-foreground">
         <Link href="/register" className="hover:text-foreground">
