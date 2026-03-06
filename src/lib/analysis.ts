@@ -156,9 +156,9 @@ export function computeDealScores(startups: Startup[]): DealStartup[] {
 
     return {
       ...s,
-      categoryMedianMultiple: categoryMedian,
+      categoryAvgMultiple: categoryMedian,
       dealScore,
-      isHotDeal: dealScore > 25,
+      isHotDeal: dealScore >= 80,
     };
   });
 }

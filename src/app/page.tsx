@@ -242,7 +242,7 @@ export default async function LandingPage() {
                   Real Data
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Sourced directly from TrustMrr and refreshed regularly — not
+                  Sourced directly from TrustMrr and refreshed regularly. Not
                   scraped estimates, actual MRR figures.
                 </p>
               </div>
@@ -252,7 +252,7 @@ export default async function LandingPage() {
             <div className="md:col-span-2 bg-muted rounded-2xl border p-8 flex items-center gap-6 min-h-52">
               <div className="flex-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                  Live market data
+                  We Index
                 </p>
                 <p className="text-2xl font-extrabold text-foreground mb-1">
                   {stats
@@ -264,18 +264,21 @@ export default async function LandingPage() {
                   continuously from TrustMrr.
                 </p>
               </div>
-              {stats?.topNiches.length ? (
-                <div className="hidden sm:flex flex-col gap-2">
-                  {stats.topNiches.slice(0, 4).map((n) => (
-                    <span
-                      key={n._id}
-                      className="text-xs bg-card border rounded-full px-3 py-1 text-foreground font-medium"
-                    >
-                      {n._id}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Top Niches</p>
+                {stats?.topNiches.length ? (
+                  <div className="hidden sm:flex flex-col gap-2">
+                    {stats.topNiches.slice(0, 4).map((n) => (
+                      <span
+                        key={n._id}
+                        className="text-xs bg-card border rounded-full px-3 py-1 text-foreground font-medium"
+                      >
+                        {n._id}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
