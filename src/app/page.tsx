@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Tag, TrendingUp, Search, Zap, ArrowRight } from "lucide-react";
+import {
+  BarChart2,
+  Tag,
+  TrendingUp,
+  Search,
+  Zap,
+  ArrowRight,
+} from "lucide-react";
 import { NicheIndexWidget } from "@/components/NicheIndexWidget";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import SiteHeader from "@/components/SiteHeader";
 import { connectToDatabase } from "@/lib/mongoose";
 import { StartupCache } from "@/lib/models/StartupCache";
+
+export const revalidate = 86400;
 
 export const metadata = {
   description:
@@ -33,13 +42,24 @@ async function getLandingStats(): Promise<{
       StartupCache.distinct("category"),
       StartupCache.aggregate<NicheStat>([
         { $match: { category: { $ne: null }, mrr: { $gt: 0 } } },
-        { $group: { _id: "$category", avgMrr: { $avg: "$mrr" }, count: { $sum: 1 } } },
+        {
+          $group: {
+            _id: "$category",
+            avgMrr: { $avg: "$mrr" },
+            count: { $sum: 1 },
+          },
+        },
         { $match: { count: { $gte: 3 } } },
         { $sort: { avgMrr: -1 } },
         { $limit: 5 },
       ]),
     ]);
-    return { total, onSale, categories: rawCategories.filter(Boolean).length, topNiches };
+    return {
+      total,
+      onSale,
+      categories: rawCategories.filter(Boolean).length,
+      topNiches,
+    };
   } catch {
     return null;
   }
@@ -107,19 +127,29 @@ export default async function LandingPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                 {loggedIn ? (
                   <Link href="/dashboard">
-                    <Button size="lg" className="gap-2 h-12 px-8 bg-white text-zinc-950 hover:bg-zinc-100">
+                    <Button
+                      size="lg"
+                      className="gap-2 h-12 px-8 bg-white text-zinc-950 hover:bg-zinc-100"
+                    >
                       Go to dashboard <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 ) : (
                   <>
                     <Link href="/register">
-                      <Button size="lg" className="gap-2 h-12 px-8 bg-white text-zinc-950 hover:bg-zinc-100">
+                      <Button
+                        size="lg"
+                        className="gap-2 h-12 px-8 bg-white text-zinc-950 hover:bg-zinc-100"
+                      >
                         Start for free <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
                     <Link href="/login">
-                      <Button size="lg" variant="ghost" className="h-12 px-8 text-zinc-300 hover:text-white hover:bg-white/10">
+                      <Button
+                        size="lg"
+                        variant="ghost"
+                        className="h-12 px-8 text-zinc-300 hover:text-white hover:bg-white/10"
+                      >
                         Sign in
                       </Button>
                     </Link>
@@ -133,9 +163,8 @@ export default async function LandingPage() {
               <div className="bg-zinc-900 dark:bg-zinc-800 rounded-2xl border border-zinc-700/50 p-6 shadow-2xl shadow-black/60">
                 <div className="flex items-center justify-between mb-5">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-                    Niche Opportunity Index
+                    Avg. M.R.R.
                   </p>
-                  <span className="text-[11px] text-zinc-500">Live</span>
                 </div>
 
                 {stats?.topNiches.length ? (
@@ -147,7 +176,9 @@ export default async function LandingPage() {
                     onSale={stats.onSale}
                   />
                 ) : (
-                  <p className="text-xs text-zinc-500 py-4">Loading market data…</p>
+                  <p className="text-xs text-zinc-500 py-4">
+                    Loading market data…
+                  </p>
                 )}
               </div>
             </div>
@@ -175,7 +206,9 @@ export default async function LandingPage() {
                 <Tag className="h-5 w-5 text-background" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Niche Opportunity Finder</h3>
+                <h3 className="text-xl font-bold mb-2 text-foreground">
+                  Niche Opportunity Finder
+                </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
                   Startups grouped by category with opportunity scores based on
                   MRR, growth, and market saturation.
@@ -189,7 +222,9 @@ export default async function LandingPage() {
                 <BarChart2 className="h-5 w-5 text-background" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-background">Deal Score</h3>
+                <h3 className="text-xl font-bold mb-2 text-background">
+                  Deal Score
+                </h3>
                 <p className="text-background/60 text-sm leading-relaxed">
                   Every startup for sale gets a deal score factoring in asking
                   multiple, MRR, and growth trajectory.
@@ -203,7 +238,9 @@ export default async function LandingPage() {
                 <TrendingUp className="h-5 w-5 text-background" />
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-foreground">Real Data</h3>
+                <h3 className="text-xl font-bold mb-2 text-foreground">
+                  Real Data
+                </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   Sourced directly from TrustMrr and refreshed regularly — not
                   scraped estimates, actual MRR figures.
@@ -218,16 +255,22 @@ export default async function LandingPage() {
                   Live market data
                 </p>
                 <p className="text-2xl font-extrabold text-foreground mb-1">
-                  {stats ? `${fmtCount(stats.total)} startups` : "Live startups"}
+                  {stats
+                    ? `${fmtCount(stats.total)} startups`
+                    : "Live startups"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  across {stats ? stats.categories : "50+"} categories, updated continuously from TrustMrr.
+                  across {stats ? stats.categories : "50+"} categories, updated
+                  continuously from TrustMrr.
                 </p>
               </div>
               {stats?.topNiches.length ? (
                 <div className="hidden sm:flex flex-col gap-2">
                   {stats.topNiches.slice(0, 4).map((n) => (
-                    <span key={n._id} className="text-xs bg-card border rounded-full px-3 py-1 text-foreground font-medium">
+                    <span
+                      key={n._id}
+                      className="text-xs bg-card border rounded-full px-3 py-1 text-foreground font-medium"
+                    >
                       {n._id}
                     </span>
                   ))}
@@ -278,8 +321,12 @@ export default async function LandingPage() {
                 <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center mb-4">
                   <Icon className="h-4 w-4 text-background" />
                 </div>
-                <h3 className="font-bold text-lg mb-2 text-foreground">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="font-bold text-lg mb-2 text-foreground">
+                  {title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {desc}
+                </p>
               </div>
             ))}
           </div>
