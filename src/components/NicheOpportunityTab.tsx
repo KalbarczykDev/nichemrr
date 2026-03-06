@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Startup, NicheGroup } from "@/lib/types";
 import { groupByCategory } from "@/lib/analysis";
 import { formatMrr, formatGrowth } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +19,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Flame, HelpCircle, TrendingUp } from "lucide-react";
 
+const PAGE_SIZE = 9;
+
 type SortBy = "opportunityScore" | "avgMrr" | "count";
 
 interface NicheOpportunityTabProps {
@@ -27,20 +30,27 @@ interface NicheOpportunityTabProps {
 
 export function NicheOpportunityTab({ startups, loading }: NicheOpportunityTabProps) {
   const [sortBy, setSortBy] = useState<SortBy>("opportunityScore");
+  const [page, setPage] = useState(1);
 
   const groups: NicheGroup[] = startups ? groupByCategory(startups) : [];
 
   const sorted = [...groups].sort((a, b) => {
     if (sortBy === "opportunityScore") return b.opportunityScore - a.opportunityScore;
-    if (sortBy === "avgMrr") return b.avgMrr - a.avgMrr;
+    if (sortBy === "avgMrr") return (b.avgMrr ?? -1) - (a.avgMrr ?? -1);
     return b.count - a.count;
   });
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to page 1 when sort changes
+  useEffect(() => { setPage(1); }, [sortBy]);
+
   const topCategory = groups.length
-    ? groups.reduce((best, g) => (g.avgMrr > best.avgMrr ? g : best), groups[0])
+    ? groups.reduce((best, g) => ((g.avgMrr ?? 0) > (best.avgMrr ?? 0) ? g : best), groups[0])
     : null;
 
-  const maxScore = Math.max(...groups.map((g) => g.opportunityScore), 1);
+  const maxScore = groups.length > 0 ? Math.max(...groups.map((g) => g.opportunityScore)) : 1;
 
   if (loading && !startups) {
     return <LoadingSkeleton />;
@@ -79,8 +89,9 @@ export function NicheOpportunityTab({ startups, loading }: NicheOpportunityTabPr
 
       {/* Niche cards grid */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {sorted.map((group, i) => {
-          const isHot = i < 3 && sortBy === "opportunityScore";
+        {paginated.map((group, i) => {
+          const globalIndex = (page - 1) * PAGE_SIZE + i;
+          const isHot = globalIndex < 3 && sortBy === "opportunityScore";
           const scorePercent = (group.opportunityScore / maxScore) * 100;
 
           return (
@@ -170,6 +181,23 @@ export function NicheOpportunityTab({ startups, loading }: NicheOpportunityTabPr
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+              Previous
+            </Button>
+            <span className="px-1">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {startups && groups.length === 0 && (
         <div className="py-16 text-center text-muted-foreground">

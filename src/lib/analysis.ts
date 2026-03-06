@@ -53,6 +53,7 @@ export function groupByCategory(startups: Startup[]): NicheGroup[] {
   }
 
   const globalMaxAvgMrr = Math.max(...groups.map((g) => g.avgMrr ?? 0), 1);
+  const globalMaxCount = Math.max(...groups.map((g) => g.count), 1);
 
   return groups.map((g) => ({
     ...g,
@@ -60,6 +61,7 @@ export function groupByCategory(startups: Startup[]): NicheGroup[] {
       g.avgMrr,
       g.count,
       globalMaxAvgMrr,
+      globalMaxCount,
       g.avgGrowth,
       g.avgProfitMargin,
     ),
@@ -70,18 +72,33 @@ export function computeOpportunityScore(
   avgMrr: number | null,
   count: number,
   globalMaxAvgMrr: number,
+  globalMaxCount: number,
   avgGrowth: number | null,
   avgProfitMargin: number | null,
 ): number {
-  const mrrScore = avgMrr != null ? avgMrr / globalMaxAvgMrr : 0; // 0–1
-  const competition = 1 - Math.min(count, 20) / 20; // 0–1, fewer = better
-  // Growth bonus: up to +20% for 100% growth
+  // Log-normalized MRR: 0–1, compresses outliers
+  const mrrScore =
+    avgMrr != null && globalMaxAvgMrr > 1
+      ? Math.log(avgMrr + 1) / Math.log(globalMaxAvgMrr + 1)
+      : 0;
+
+  // Log-normalized competition relative to dataset max: 0–1, fewer = better
+  const competition =
+    globalMaxCount > 1
+      ? 1 - Math.log(count + 1) / Math.log(globalMaxCount + 1)
+      : 1;
+
+  // Growth bonus: up to +0.15 for 100% growth
   const growthBonus =
-    avgGrowth != null ? Math.min(Math.max(avgGrowth, 0), 1) * 0.2 : 0;
-  // Margin bonus: up to +10% for 100% profit margin
+    avgGrowth != null ? Math.min(Math.max(avgGrowth, 0), 1) * 0.15 : 0;
+
+  // Margin bonus: up to +0.1 for 100% profit margin
   const marginBonus =
     avgProfitMargin != null ? Math.min(avgProfitMargin / 100, 1) * 0.1 : 0;
-  return mrrScore * competition * (1 + growthBonus + marginBonus);
+
+  // Weighted additive: MRR is primary signal, competition secondary
+  // No factor can zero out the score entirely
+  return mrrScore * 0.65 + competition * 0.35 + growthBonus + marginBonus;
 }
 
 export function computeDealScores(startups: Startup[]): DealStartup[] {
