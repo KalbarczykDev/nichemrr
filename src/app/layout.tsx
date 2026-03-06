@@ -39,27 +39,7 @@ export default function RootLayout({
           >
             <UserSettingsSync />
             <div className="flex min-h-screen flex-col">
-              {/* Beta notice */}
-              <div className="bg-amber-400 text-amber-950 text-xs text-center px-4 py-2 font-medium flex items-center justify-center gap-1 flex-wrap">
-                You&apos;re viewing an early preview of NicheMRR. Some data is
-                placeholder and scores may change. By using this site you agree
-                to our{" "}
-                <Link
-                  href="/tos"
-                  className="underline underline-offset-2 hover:opacity-70"
-                >
-                  Terms
-                </Link>{" "}
-                &amp;{" "}
-                <Link
-                  href="/privacy"
-                  className="underline underline-offset-2 hover:opacity-70"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </div>
-              <div className="flex flex-1 flex-col">{children}</div>
+<div className="flex flex-1 flex-col">{children}</div>
               <footer className="border-t py-6">
                 <div className="container mx-auto flex flex-col items-center gap-2 px-4 text-xs text-muted-foreground">
                   <span>

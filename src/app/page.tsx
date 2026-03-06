@@ -265,7 +265,9 @@ export default async function LandingPage() {
                 </p>
               </div>
               <div className="flex-1">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Top Niches</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                  Top Niches
+                </p>
                 {stats?.topNiches.length ? (
                   <div className="hidden sm:flex flex-col gap-2">
                     {stats.topNiches.slice(0, 4).map((n) => (
