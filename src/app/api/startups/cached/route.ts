@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
 
   await connectToDatabase();
 
-  const oldest = await StartupCache.findOne({}).sort({ cachedAt: 1 }).select("cachedAt").lean();
-  if (!oldest) {
+  const newest = await StartupCache.findOne({}).sort({ cachedAt: -1 }).select("cachedAt").lean();
+  if (!newest) {
     return NextResponse.json({ error: "Cache is empty. Run the seed script to populate it." }, { status: 503 });
   }
 
@@ -24,6 +24,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     data,
-    meta: { count: data.length, cachedAt: oldest.cachedAt },
+    meta: { count: data.length, cachedAt: newest.cachedAt },
   });
 }

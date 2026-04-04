@@ -6,8 +6,6 @@ import "./globals.css";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
-import { UserSettingsSync } from "@/components/UserSettingsSync";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,14 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <SessionProviderWrapper>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem={true}
-          >
-            <UserSettingsSync />
-            <div className="flex min-h-screen flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem={true}
+        >
+          <div className="flex min-h-screen flex-col">
 <div className="flex flex-1 flex-col">{children}</div>
               <footer className="border-t py-6">
                 <div className="container mx-auto flex flex-col items-center gap-2 px-4 text-xs text-muted-foreground">
@@ -72,7 +68,6 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ThemeProvider>
-        </SessionProviderWrapper>
         <Analytics />
         <SpeedInsights />
       </body>

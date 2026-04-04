@@ -1,24 +1,15 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const { status } = useSession();
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    if (status === "authenticated") {
-      fetch("/api/user/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme: next }),
-      }).catch(() => {});
-    }
   }
 
   return (

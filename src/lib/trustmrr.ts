@@ -35,6 +35,25 @@ function normalise(raw: TrustMrrStartup): Startup {
   };
 }
 
+export async function fetchPageFromAPI(
+  apiKey: string,
+  page: number
+): Promise<{ startups: Startup[]; hasMore: boolean; totalPages: number }> {
+  const searchParams = new URLSearchParams({ page: String(page), limit: "50" });
+  const res = await fetch(`${TRUSTMRR_API_BASE}/startups?${searchParams}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+    next: { revalidate: 0 },
+  });
+
+  if (res.status === 401 || res.status === 403) throw new Error("UNAUTHORIZED");
+  if (res.status === 429 || res.status === 500) throw new Error("RATE_LIMITED");
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+  const json: TrustMrrResponse = await res.json();
+  const totalPages = Math.ceil(json.meta.total / json.meta.limit);
+  return { startups: json.data.map(normalise), hasMore: json.meta.hasMore, totalPages };
+}
+
 export async function fetchAllStartupsFromAPI(
   apiKey: string,
   onProgress?: (page: number, loaded: number, retrying: boolean) => void
