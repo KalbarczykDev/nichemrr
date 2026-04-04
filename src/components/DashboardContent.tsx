@@ -205,19 +205,21 @@ export function DashboardContent() {
       )}
 
       <Tabs defaultValue="niches">
-        <div className="mb-6 flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="niches" className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              Niche Opportunity Finder
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="niches" className="flex flex-1 items-center gap-2 sm:flex-none">
+              <Tag className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Niche Opportunity Finder</span>
+              <span className="sm:hidden">Niches</span>
             </TabsTrigger>
-            <TabsTrigger value="valuation" className="flex items-center gap-2">
-              <BarChart2 className="h-4 w-4" />
-              Startup Valuation / Deal Score
+            <TabsTrigger value="valuation" className="flex flex-1 items-center gap-2 sm:flex-none">
+              <BarChart2 className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Startup Valuation / Deal Score</span>
+              <span className="sm:hidden">Deals</span>
             </TabsTrigger>
           </TabsList>
           {cachedAt && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground sm:text-right">
               Updated {formatCachedAt(cachedAt)}
             </p>
           )}

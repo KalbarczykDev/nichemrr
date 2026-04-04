@@ -1,9 +1,7 @@
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -35,41 +33,28 @@ export default function RootLayout({
           enableSystem={true}
         >
           <div className="flex min-h-screen flex-col">
-<div className="flex flex-1 flex-col">{children}</div>
-              <footer className="border-t py-6">
-                <div className="container mx-auto flex flex-col items-center gap-2 px-4 text-xs text-muted-foreground">
-                  <span>
-                    © {new Date().getFullYear()}{" "}
-                    <a
-                      href="https://kalbarczyk.dev"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      @KalbarczykDev
-                    </a>
-                  </span>
-                  <div className="flex items-center gap-4">
-                    <Link
-                      href="/tos"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Terms
-                    </Link>
-                    <Link
-                      href="/privacy"
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Privacy
-                    </Link>
-                  </div>
-                </div>
-              </footer>
-            </div>
-            <Toaster />
-          </ThemeProvider>
+            <div className="flex flex-1 flex-col">{children}</div>
+            <footer className="border-t py-5">
+              <div className="container mx-auto flex flex-col items-center gap-2 px-4 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+                <span>
+                  Feedback or ideas?{" "}
+                  <a
+                    href="https://twitter.com/KalbarczykDev"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-foreground transition-colors"
+                  >
+                    @KalbarczykDev
+                  </a>{" "}
+                  on Twitter/X
+                </span>
+                <span>© {new Date().getFullYear()} NicheMRR</span>
+              </div>
+            </footer>
+          </div>
+          <Toaster />
+        </ThemeProvider>
         <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );

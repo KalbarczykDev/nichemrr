@@ -125,126 +125,128 @@ export function ValuationTab({ startups, loading }: ValuationTabProps) {
 
         {/* Table */}
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => toggleSort("mrr")}
-                >
-                  MRR <SortIcon col="mrr" />
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => toggleSort("askingPrice")}
-                >
-                  Asking Price <SortIcon col="askingPrice" />
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => toggleSort("multiple")}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1 cursor-help">
-                        Multiple{" "}
-                        <HelpCircle className="h-3 w-3 text-muted-foreground" />{" "}
-                        <SortIcon col="multiple" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-56">
-                      Asking price ÷ MRR. Lower = cheaper relative to revenue.
-                      Most SaaS acquisitions range from 20×–60× MRR.
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-                <TableHead>
-                  <Tooltip>
-                    <TooltipTrigger className="flex items-center gap-1 cursor-help">
-                      Cat Avg <HelpCircle className="h-3 w-3" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-56">
-                      Median asking multiple of all for-sale startups in the
-                      same category. Used as the baseline for the Deal Score. A
-                      startup priced well below this is a potential bargain.
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => toggleSort("dealScore")}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1">
-                        Deal Score{" "}
-                        <HelpCircle className="h-3 w-3 text-muted-foreground" />{" "}
-                        <SortIcon col="dealScore" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-64">
-                      <p className="font-semibold mb-1">
-                        How it&apos;s calculated
-                      </p>
-                      <p className="text-muted-foreground mb-2">
-                        Value score (how far below category median multiple) +
-                        margin bonus (profit margin above/below 50%). Higher =
-                        better deal.
-                      </p>
-                      <p>
-                        <strong className="text-amber-400">🔥 Fire</strong> =
-                        score ≥ 80, exceptional value.
-                        <br />
-                        <strong className="text-green-400">Green</strong> =
-                        positive score, priced below avg.
-                        <br />
-                        <strong className="text-red-400">Red</strong> = negative
-                        score, priced above avg.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageRows.map((s) => (
-                <TableRow
-                  key={s.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    window.open(s.url, "_blank", "noopener,noreferrer")
-                  }
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-1">
-                      {s.name}
-                      <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {s.category ?? "Uncategorized"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatMrr(s.mrr)}</TableCell>
-                  <TableCell>
-                    {s.askingPrice !== null ? formatMrr(s.askingPrice) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    {s.multiple !== null ? formatMultiple(s.multiple) : "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatMultiple(s.categoryAvgMultiple)}
-                  </TableCell>
-                  <TableCell>
-                    <DealScoreBadge score={s.dealScore} isHot={s.isHotDeal} />
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">Category</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("mrr")}
+                  >
+                    MRR <SortIcon col="mrr" />
+                  </TableHead>
+                  <TableHead
+                    className="hidden md:table-cell cursor-pointer select-none"
+                    onClick={() => toggleSort("askingPrice")}
+                  >
+                    Asking Price <SortIcon col="askingPrice" />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("multiple")}
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          Multiple{" "}
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />{" "}
+                          <SortIcon col="multiple" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-56">
+                        Asking price ÷ MRR. Lower = cheaper relative to revenue.
+                        Most SaaS acquisitions range from 20×–60× MRR.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                        Cat Avg <HelpCircle className="h-3 w-3" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-56">
+                        Median asking multiple of all for-sale startups in the
+                        same category. Used as the baseline for the Deal Score. A
+                        startup priced well below this is a potential bargain.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("dealScore")}
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1">
+                          Deal Score{" "}
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />{" "}
+                          <SortIcon col="dealScore" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64">
+                        <p className="font-semibold mb-1">
+                          How it&apos;s calculated
+                        </p>
+                        <p className="text-muted-foreground mb-2">
+                          Value score (how far below category median multiple) +
+                          margin bonus (profit margin above/below 50%). Higher =
+                          better deal.
+                        </p>
+                        <p>
+                          <strong className="text-amber-400">🔥 Fire</strong> =
+                          score ≥ 80, exceptional value.
+                          <br />
+                          <strong className="text-green-400">Green</strong> =
+                          positive score, priced below avg.
+                          <br />
+                          <strong className="text-red-400">Red</strong> = negative
+                          score, priced above avg.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {pageRows.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      window.open(s.url, "_blank", "noopener,noreferrer")
+                    }
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1">
+                        <span className="truncate max-w-[140px] sm:max-w-none">{s.name}</span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant="secondary" className="text-xs">
+                        {s.category ?? "Uncategorized"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatMrr(s.mrr)}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {s.askingPrice !== null ? formatMrr(s.askingPrice) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {s.multiple !== null ? formatMultiple(s.multiple) : "—"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground">
+                      {formatMultiple(s.categoryAvgMultiple)}
+                    </TableCell>
+                    <TableCell>
+                      <DealScoreBadge score={s.dealScore} isHot={s.isHotDeal} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {deals.length === 0 && !loading && (
             <div className="py-16 text-center text-muted-foreground">
               No startups for sale found.
@@ -253,7 +255,7 @@ export function ValuationTab({ startups, loading }: ValuationTabProps) {
         </Card>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               {(page - 1) * PAGE_SIZE + 1}–
               {Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
